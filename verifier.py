@@ -1,44 +1,64 @@
 #!/usr/bin/env python3
-from cryptography.exceptions import InvalidSignature
-from cryptography.hazmat.primitives.asymmetric import rsa,padding
-from cryptography.hazmat.primitives import hashes,serialization
-from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
-import cryptography.hazmat.primitives.padding as symmetric_padding
-from cryptography.hazmat.primitives.ciphers.aead import AESCCM
 import secrets
 import socket
-import sys
-import base64
-import os
-import argparse
-import threading
-import time
 from group import *
 
 
+def one_round(g_vec,h_vec,u,P,conn,p,Grp):
+	n = len(g_vec)
+	#Base case
+	if n==1:
+		msg = conn.recv(1024)
+		a,b = msg.split(b'*')
+		a = Vector.deserialize(p,a,Zmod)
+		b = Vector.deserialize(p,b,Zmod)
+		c = a.inner_prod(b)
+		P_n = g_vec.exp(a).mult(h_vec.exp(b)).mult(u.exp(c))
+		if P_n==P:
+			print("Verification successfull!!")
+		else:
+			print("Verification failed")
 
+		return None,None,None,None
+		
+	#Recursion part
 
-parser = argparse.ArgumentParser()
-parser.add_argument('-n', type=str, required=True)
-parser.add_argument('-m', type=str, required=True)
-parser.add_argument('-q', type=int, required=True)
+	n1 = n//2
+	g_vec1 = Vector(g_vec[:n1],p)
+	g_vec2 = Vector(g_vec[n1:],p)
+	h_vec1 = Vector(h_vec[:n1],p)
+	h_vec2 = Vector(h_vec[n1:],p)
+	msg = conn.recv(1024)
+	L,R = msg.split(b'*')
+	L = Grp.deserialize(p,L)
+	R = Grp.deserialize(p,R)
+	x = secrets.randbelow(p)
+	x = Zmod(p,x)
+	c.send(x.serialize())
 
-args = parser.parse_args()
+	x_inv = x.inverse()
+	gd = g_vec1.exp(x_inv.v).mult(g_vec2.exp(x.v))
+	hd = h_vec1.exp(x.v).mult(h_vec2.exp(x_inv.v))
+	Pd = L.exp(x.exp(2).v).mult(P).mult(R.exp(x.exp(-2)))
 
+	return gd,hd,u,Pd
 
+def verifier(port,p,g,h,u,P,Grp):
+	'''
+	port - verifier port
+	p - group order
+	g - vector of generators
+	h - vector of generators
+	u - group element
+	P - commitment
+  Grp - Group class
+	'''
+	s = socket.socket()
+	s.bind(('', port))
+	s.listen(5)
+	c, addr = s.accept()
+	print ('Prover ip,port : ', addr )
 
-serv_name = args.n
-s = socket.socket()
-port = args.q
-s.bind(('', port))
-
-s.listen(5)
-
-c, addr = s.accept()
-
-print ('Prover ip,port : ', addr )
-
-x = Zmod(p).random()
-
-c.send(str(x).encode())
+	while g is not None:
+		g,h,u,P = one_round(g,h,u,P,c,p,Grp)
 

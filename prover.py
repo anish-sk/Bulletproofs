@@ -1,90 +1,69 @@
 #!/usr/bin/env python3
-from cryptography.exceptions import InvalidSignature
-from cryptography.hazmat.primitives.asymmetric import rsa,padding
-from cryptography.hazmat.primitives import hashes,serialization
-from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
-import cryptography.hazmat.primitives.padding as symmetric_padding
-from cryptography.hazmat.primitives.ciphers.aead import AESCCM
-import secrets
 import socket
-import sys
-import base64
-import os
-import argparse
-import threading
-import time
 from group import *
 
 
-#parsing arguments
-parser = argparse.ArgumentParser(description='TLS Client')
+def one_round(g_vec,h_vec,u,P,a_vec,b_vec,server_s,p):
+	n = len(g_vec)
+	
+	#Base case
+	if n==1:
+		server_s.send(a_vec.serialize()+b'*'+b_vec.serialize())
+		return None,None,None,None,None,None
 
-#Required Name Argument
-parser.add_argument('-n', type=str, help = 'Name of the client', required=True)
+	#Recursion part
+	n1 = n//2
+	g_vec1 = Vector(g_vec[:n1],p)
+	g_vec2 = Vector(g_vec[n1:],p)
+	h_vec1 = Vector(h_vec[:n1],p)
+	h_vec2 = Vector(h_vec[n1:],p)
+	a_vec1 = Vector(a_vec[:n1],p)
+	a_vec2 = Vector(a_vec[n1:],p)
+	b_vec1 = Vector(b_vec[:n1],p)
+	b_vec2 = Vector(b_vec[n1:],p)
 
-#Required Mode Argument
-parser.add_argument('-m', type=str, help = 'Mode of the client - Sender(S)/Receiver(R)', required=True)
+	cL = a_vec1.inner_prod(b_vec2)
+	cR = a_vec2.inner_prod(b_vec1)
 
-#Required Server IP Argument
-parser.add_argument('-d', type=str, help = 'Server IP denotes the IP address of the server', required=True)
+	L = g_vec2.exp(a_vec1).mult(h_vec1.exp(b_vec2)).mult(u.exp(cL))
+	R = g_vec1.exp(a_vec2).mult(h_vec2.exp(b_vec1)).mult(u.exp(cR))
 
-#Required Server Port Argument
-parser.add_argument('-q', type=int, help = 'Port on which the Server process listens', required=True)
 
-args = parser.parse_args()
+	server_s.send(L.serialize()+'*'+R.serialize())
 
-#sanity checks
-if args.m != 'R':
-	print("client.py has to be run only with mode = R")
-	sys.exit()
+	msg = server_s.recv(1024)
+	x = Zmod.deserialize(p,msg)
+	x_inv = x.inverse()
 
-my_name = args.n
-server_ip = args.d
-server_port = args.q
-p = 
-g_vec = 
-h_vec = 
-u = 
-P = 
-a_vec = 
-b_vec = 
-n = len(g_vec)
-n1 = n//2
+	gd = g_vec1.exp(x_inv.v).mult(g_vec2.exp(x.v))
+	hd = h_vec1.exp(x.v).mult(h_vec2.exp(x_inv.v))
+	Pd = L.exp(x.exp(2).v).mult(P).mult(R.exp(x.exp(-2)))
 
-def vector_gen(g,x):
-	result = []
-	if x<0:
-		g = g.inverse()
-		x = -x
+	ad = a_vec1.mult(x.v).add(a_vec2.mult(x_inv.v))
+	bd = b_vec1.mult(x_inv.v).add(b_vec2.mult(x.v))
 
-	for i in range(x):
-		result.append(g.exp(i))
-
-	return Vector(result)
-
-#Opening socket to connect with the server
-server_s = socket.socket()
-server_s.connect((server_ip, server_port))
-print("Connected to server")
-
-msg = server_s.recv(1024)
-
-x_value = int(msg.decode())
-
-x = Zmod(p,x_value)
-
-g_vec1 = g_vec[:n1]
-g_vec2 = g_vec[n1:]
-a_vec1 = a_vec[:n1] 
-a_vec2 = a_vec[n1:]
-b_vec1 = b_vec[:n1] 
-b_vec2 = b_vec[n1:]
+	return gd,hd,u,Pd,ad,bd
 
 
 
+def prover(ip,port,p,g,h,u,P,a,b):
+	'''
+	ip - verifier ip
+	port - verifier port
+	p - group order
+	g - vector of generators
+	h - vector of generators
+	u - group element
+	P - commitment
+	a - Vector of Zp group elements
+	b - Vector of Zp group elements
+	'''
 
+	#Opening socket to connect with the verifier
+	server_s = socket.socket()
+	server_s.connect((ip, port))
+	print("Connected to verifier")
 
-
-
-
+	while g is not None:
+		g,h,u,P,a,b = one_round(g,h,u,P,a,b,server_s,p)
 
