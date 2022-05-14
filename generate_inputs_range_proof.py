@@ -1,1 +1,0 @@
-#Generate v, gamma and V given p and n
