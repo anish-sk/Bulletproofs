@@ -47,8 +47,8 @@ gamma = args.g
 V = h.exp(gamma).mult(g.exp(v))
 
 #Commitment to aL and aR 
-aL = Vector([Zmod(p,int(i)) for i in list(bin(v)[2:].zfill(n))[::-1]],p)
-aR = Vector([Zmod(p,int(i)-1) for i in list(bin(v)[2:].zfill(n))[::-1]],p) 
+aL = Vector([Zmod(p,int(i)) for i in list(bin(v)[2:].zfill(n)[:n])[::-1]],p)
+aR = Vector([Zmod(p,int(i)-1) for i in list(bin(v)[2:].zfill(n)[:n])[::-1]],p) 
 alpha = secrets.randbelow(p)
 
 h_alpha = h.exp(alpha)

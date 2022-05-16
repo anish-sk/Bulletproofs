@@ -68,12 +68,12 @@ V = Vector(V, p)
 #Commitment to aL and aR 
 aL = []
 for i in range(m):
-	aL += [Zmod(p,int(i)) for i in list(bin(v.v[i].v)[2:].zfill(n))[::-1]]
+	aL += [Zmod(p,int(i)) for i in list(bin(v.v[i].v)[2:].zfill(n)[:n])[::-1]]
 aL = Vector(aL, p)
 
 aR = []
 for i in range(m):
-	aR += [Zmod(p,int(i)-1) for i in list(bin(v.v[i].v)[2:].zfill(n))[::-1]] 
+	aR += [Zmod(p,int(i)-1) for i in list(bin(v.v[i].v)[2:].zfill(n)[:n])[::-1]] 
 aR = Vector(aR, p)
 
 alpha = secrets.randbelow(p)
