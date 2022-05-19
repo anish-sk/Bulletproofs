@@ -189,7 +189,7 @@ if msg[:3] == "400":
 	s.close()
 	sys.exit()
 elif msg[:3]=="200":
-	print("Verified that t_hat = t(x) =  t0 + t1*x t2*x*x")
+	print("Verified that t_hat = t(x) =  t0 + t1*x + t2*x*x")
 else :
 	print("Error!!")
 

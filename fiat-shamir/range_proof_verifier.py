@@ -120,7 +120,7 @@ for i in range(n):
 hdash = Vector(hdash,p)
 
 #First check
-#check that t_hat = t(x) =  t0 + t1*x t2*x*x
+#check that t_hat = t(x) =  t0 + t1*x + t2*x*x
 
 #LHS
 g_t_hat = g.exp(t_hat)
@@ -146,9 +146,9 @@ rhs1 = Vz2.mult(g_delta).mult(T1x).mult(T2x2)
 
 #Compare lhs and rhs
 if lhs1 == rhs1:
-	print("Verified that t_hat = t(x) =  t0 + t1*x t2*x*x")
+	print("Verified that t_hat = t(x) =  t0 + t1*x + t2*x*x")
 else:
-	print("Verification failed: t_hat != t0 + t1*x t2*x*x")
+	print("Verification failed: t_hat != t0 + t1*x + t2*x*x")
 	sys.exit()
 
 #Calculate P and Pdash

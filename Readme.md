@@ -68,10 +68,10 @@ Aggregating Range Proofs:
 5) The program will run and generate inputs and store them in the files "v", "gamma" and "V".
 6) In the first terminal tab, run the following command for running the prover. Let the seed you entered in i.txt be "1000" and the port that you want the prover to listen at be "1234". Then:
 
-	 ``python3 aggregate_range_proof_prover.py -p 1234 -v $(cat v) -g $(cat gamma) -s 1000``.
+	 ``python3 aggregate_range_proof_prover.py -p 1234 -s 1000``.
 7) In the second terminal tab, run the following command for running the verifier. Let the seed you entered in i.txt be "1000" and the port that the prover is listening at be "1234". Then:
 
-	``python3 aggregate_range_proof_verifier.py -a 127.0.0.1 -p 1234 -V $(cat V) -s 1000``.
+	``python3 aggregate_range_proof_verifier.py -a 127.0.0.1 -p 1234 -s 1000``.
 
    In case you wish to run the prover on a separate machine, then you will need to change the -a argument appropriately.
 8) The prover and verifier will run, interact and complete the proof. If the prover implementation is correct you will get the following message at the end of the verifier's execution: "Verification successfull!!" 
